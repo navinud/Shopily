@@ -21,5 +21,14 @@ public class UserController {
         return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }
 
-    // Additional endpoints as needed
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> verifyOtp(@RequestBody UserDto userDto) {
+        boolean isOtpValid = userService.verifyOtp(userDto.getEmail(), userDto.getOtp());
+        if (isOtpValid) {
+            userService.saveUser(userDto);
+            return new ResponseEntity<>("OTP verified successfully. User registered.", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Invalid OTP.", HttpStatus.BAD_REQUEST);
+        }
+    }
 }
