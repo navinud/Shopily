@@ -16,19 +16,23 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody UserDto userDto) {
-        User newUser = userService.registerUser(userDto);
-        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
+    public ResponseEntity<?> registerUser(@RequestBody UserDto userDto) {
+        try {
+            userService.registerUser(userDto);
+            return ResponseEntity.ok("OTP sent to email. Please verify.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<String> verifyOtp(@RequestBody UserDto userDto) {
+    public ResponseEntity<?> verifyOtp(@RequestBody UserDto userDto) {
         boolean isOtpValid = userService.verifyOtp(userDto.getEmail(), userDto.getOtp());
         if (isOtpValid) {
-            userService.saveUser(userDto);
-            return new ResponseEntity<>("OTP verified successfully. User registered.", HttpStatus.OK);
+            User savedUser = userService.saveUser(userDto);
+            return ResponseEntity.ok(savedUser);
         } else {
-            return new ResponseEntity<>("Invalid OTP.", HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid OTP");
         }
     }
 }

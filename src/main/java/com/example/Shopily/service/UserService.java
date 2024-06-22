@@ -1,6 +1,8 @@
 package com.example.Shopily.service;
 
 import com.example.Shopily.dto.UserDto;
+import com.example.Shopily.model.Consumer;
+import com.example.Shopily.model.ShopOwner;
 import com.example.Shopily.model.User;
 import com.example.Shopily.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,34 +10,30 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private EmailService emailService; // service to send email
+    private EmailService emailService;
 
-    private Map<String, String> otpStore = new HashMap<>(); // in-memory store for OTPs
+    private Map<String, String> otpStore = new HashMap<>();
 
-    public User registerUser(UserDto userDto) {
+    public void registerUser(UserDto userDto) {
         // Generate OTP
         String otp = generateOtp();
         otpStore.put(userDto.getEmail(), otp);
 
         // Send OTP to user's email
         emailService.sendOtpEmail(userDto.getEmail(), otp);
-
-        // Create User object but do not save it yet
-        User user = new User();
-        user.setUsername(userDto.getEmail());
-        user.setEmail(userDto.getEmail());
-
-        // Return user object without saving to prompt OTP verification
-        return user;
     }
 
     public boolean verifyOtp(String email, String otp) {
@@ -55,10 +53,16 @@ public class UserService {
     }
 
     public User saveUser(UserDto userDto) {
-        User user = new User();
-        user.setUsername(userDto.getEmail());
-        user.setEmail(userDto.getEmail());
+        logger.debug("Saving user with role: " + userDto.getRole());
+
+        User user;
+        if ("shop_owner".equals(userDto.getRole())) {
+            user = new ShopOwner(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getShopName(), userDto.getLocation(), userDto.getAddress(), userDto.getShopType(), userDto.getShopPhoto());
+        } else if ("consumer".equals(userDto.getRole())) {
+            user = new Consumer(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getName());
+        } else {
+            throw new IllegalArgumentException("Unknown user type");
+        }
         return userRepository.save(user);
     }
 }
-
