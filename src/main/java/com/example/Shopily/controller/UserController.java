@@ -29,8 +29,7 @@ public class UserController {
     public ResponseEntity<?> verifyOtp(@RequestBody UserDto userDto) {
         boolean isOtpValid = userService.verifyOtp(userDto.getEmail(), userDto.getOtp());
         if (isOtpValid) {
-            User savedUser = userService.saveUser(userDto);
-            return ResponseEntity.ok(savedUser);
+            return ResponseEntity.ok("OTP verified successfully.");
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid OTP");
         }

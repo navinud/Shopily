@@ -4,7 +4,8 @@ import com.example.Shopily.dto.UserDto;
 import com.example.Shopily.model.Consumer;
 import com.example.Shopily.model.ShopOwner;
 import com.example.Shopily.model.User;
-import com.example.Shopily.repository.UserRepository;
+import com.example.Shopily.repository.ConsumerRepository;
+import com.example.Shopily.repository.ShopOwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,15 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 public class UserService {
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
-    private UserRepository userRepository;
+    private ConsumerRepository consumerRepository;
+
+    @Autowired
+    private ShopOwnerRepository shopOwnerRepository;
 
     @Autowired
     private EmailService emailService;
@@ -28,6 +29,18 @@ public class UserService {
     private Map<String, String> otpStore = new HashMap<>();
 
     public void registerUser(UserDto userDto) {
+        // Save user details to the database
+        User user;
+        if ("shop_owner".equals(userDto.getRole())) {
+            user = new ShopOwner(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getShopName(), userDto.getLocation(), userDto.getAddress(), userDto.getShopType(), userDto.getShopPhoto());
+            shopOwnerRepository.save((ShopOwner) user);
+        } else if ("consumer".equals(userDto.getRole())) {
+            user = new Consumer(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getName());
+            consumerRepository.save((Consumer) user);
+        } else {
+            throw new IllegalArgumentException("Unknown user type");
+        }
+
         // Generate OTP
         String otp = generateOtp();
         otpStore.put(userDto.getEmail(), otp);
@@ -42,27 +55,17 @@ public class UserService {
             // OTP is correct, remove it from store
             otpStore.remove(email);
             return true;
+        } else {
+            // OTP is incorrect, delete user details from database
+            consumerRepository.findByEmail(email).ifPresent(consumerRepository::delete);
+            shopOwnerRepository.findByEmail(email).ifPresent(shopOwnerRepository::delete);
+            return false;
         }
-        return false;
     }
 
     private String generateOtp() {
         Random random = new Random();
         int otp = 100000 + random.nextInt(900000); // generate a 6-digit OTP
         return String.valueOf(otp);
-    }
-
-    public User saveUser(UserDto userDto) {
-        logger.debug("Saving user with role: " + userDto.getRole());
-
-        User user;
-        if ("shop_owner".equals(userDto.getRole())) {
-            user = new ShopOwner(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getShopName(), userDto.getLocation(), userDto.getAddress(), userDto.getShopType(), userDto.getShopPhoto());
-        } else if ("consumer".equals(userDto.getRole())) {
-            user = new Consumer(userDto.getEmail(), userDto.getContactNumber(), userDto.getPassword(), userDto.getName());
-        } else {
-            throw new IllegalArgumentException("Unknown user type");
-        }
-        return userRepository.save(user);
     }
 }

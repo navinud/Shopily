@@ -3,11 +3,11 @@ package com.example.Shopily.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "users")
+@Document(collection = "consumers")
 public class Consumer extends User {
     private String name;
 
-    // Constructors, getters and setters
+    // Constructors, getters, and setters
     public Consumer() {
         super();
     }

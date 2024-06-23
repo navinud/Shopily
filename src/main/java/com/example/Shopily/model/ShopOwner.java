@@ -3,7 +3,7 @@ package com.example.Shopily.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "users")
+@Document(collection = "shopOwners")
 public class ShopOwner extends User {
     private String shopName;
     private String location;
@@ -11,7 +11,7 @@ public class ShopOwner extends User {
     private String shopType;
     private String shopPhoto;
 
-    // Constructors, getters and setters
+    // Constructors, getters, and setters
     public ShopOwner() {
         super();
     }
